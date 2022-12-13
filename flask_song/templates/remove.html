@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Box O remover</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="//code.jquery.com/jquery-1.11.0.min.js" type="text/javascript"></script>
+    <script>
+        const category = {{ category | tojson }};
+        let song_type = {};
+        let category_val = {{ category[:-1] | length }};
+        function remove_song(song_name) {
+            if (confirm(`"${song_name}" 노래를 정말 지우겠습니까?`)) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/api',
+                    data: {
+                        'type': 'remove_song',
+                        'value': category[category_val],
+                        'song_name': song_name
+                    },
+                    success: function(response) {
+                        if(response['type'] == 'error') {
+                            alert('error!\n'+response['message']);
+                        } else if(response['type'] == 'success') {
+                            $(`tbody > tr[value="${song_name}"]`).remove();
+                        }
+                    },
+                    err: function(err) {
+                        alert('error!\nserver connection error')
+                    }
+                })
+            } else {
+                    // 확인(예) 버튼 클릭 시 이벤트
+            }
+        }
+        function change_playlist(type) {
+            category_val_temp = $('select#type option:selected').val();
+            $.ajax({
+                type: 'POST',
+                url: '/api',
+                data: {
+                    'type': 'select_playlist',
+                    'value': category[category_val_temp]
+                },
+                success: function(response) {
+                    if(response['type'] == 'error') {
+                        alert('error!\n'+response['message']);
+                    } else if(response['type'] == 'success') {
+                        category_val = category_val_temp;
+                        playlist = response['list'];
+                        $('tbody > tr').remove();
+                        let tbody = $('tbody');
+                        for(idx in playlist) {
+                            tbody.append(`<tr id="tr_${idx}" value="${playlist[idx]}">
+                                <th scope="row">${idx}</th>
+                                <td>${playlist[idx]}</td>
+                                <td><button type="button" class="btn-close" id="${idx}" value="${playlist[idx]}" onclick="remove_song(this.value)"></button></td>
+                            </tr>`);
+                        }
+                    }
+                },
+                err: function(err) {
+                    alert('error!\nserver connection error')
+                }
+            })
+        }
+    </script>
+    <style>
+        .custom-file-upload {
+            border: 1px solid #ccc;
+            display: inline-block;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+        body {
+            min-height: 75rem;
+            padding-top: 4.5rem;
+        }
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <main role="main">
+        <form enctype="multipart/form-data">
+            <div class="container">
+                <select class="text-center form-select" name="type" id="type" onchange="change_playlist('category')">
+                    {% for i in range(category[:-1] | length) %}
+                    <option value="{{ i }}">{{ category[i] }}</option>
+                    {% endfor %}
+                    <option value="{{ category[:-1] | length }}" selected="">all</option>
+                </select>
+                <table id="check_files" class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">song name</th>
+                            <th scope="col">delete</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for idx in range(playlist | length) %}
+                        <tr id="tr_{{idx}}" value="{{ playlist[idx] }}">
+                            <th scope="row">{{ idx }}</th>
+                            <td>{{ playlist[idx] }}</td>
+                            <td><button type="button" class="btn-close" id="{{ idx }}" value="{{ playlist[idx] }}" onclick="remove_song(this.value)"></button></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </form>
+    </main>
+    {% include 'footer.html' %}
+</body>
+</html>
