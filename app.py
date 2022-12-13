@@ -138,7 +138,7 @@ def play():
     for i in playlist:
         singer, title = i[:-4].split(' - ')
         send_data.append([title, singer])
-        return render_template('play.html', page_type='category', category=category, data=send_data, status=status.value, now_min=now_min, now_sec=now_sec, now_full=now_full, full_time=full_time, now_singer=now_singer, now_title=now_title, percent=percent, volume=volume.value)
+    return render_template('play.html', page_type='category', category=category, data=send_data, status=status.value, now_min=now_min, now_sec=now_sec, now_full=now_full, full_time=full_time, now_singer=now_singer, now_title=now_title, percent=percent, volume=volume.value)
 
 @app.route('/remove')
 def remove():
